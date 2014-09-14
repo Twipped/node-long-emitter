@@ -1,0 +1,36 @@
+{
+  "name": "long-emitter",
+  "version": "1.0.0",
+  "description": "A buffered EventEmitter with built in express middleware for long-polling.",
+  "main": "index.js",
+  "scripts": {
+    "test": "istanbul cover nodeunit -- tests",
+    "test-travis": "istanbul cover nodeunit --reporter=lcov -- tests"
+  },
+  "author": "Jarvis Badgley <chiper@chipersoft.com> (http://chipersoft.com/)",
+  "license": "MIT",
+  "dependencies": {
+    "lodash.assign": "^2.4.1",
+    "lodash.debounce": "^2.4.1",
+    "proxmis": "^0.2.0"
+  },
+  "devDependencies": {
+    "istanbul": "^0.3.2",
+    "nodeunit": "^0.9.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ChiperSoft/node-long-emitter.git"
+  },
+  "keywords": [
+    "eventemitter",
+    "long-polling",
+    "express",
+    "middleware",
+    "events"
+  ],
+  "bugs": {
+    "url": "https://github.com/ChiperSoft/node-long-emitter/issues"
+  },
+  "homepage": "https://github.com/ChiperSoft/node-long-emitter"
+}
