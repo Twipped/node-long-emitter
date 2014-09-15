@@ -10,6 +10,7 @@
   "author": "Jarvis Badgley <chiper@chipersoft.com> (http://chipersoft.com/)",
   "license": "MIT",
   "dependencies": {
+    "debug": "^2.0.0",
     "lodash.assign": "^2.4.1",
     "lodash.debounce": "^2.4.1",
     "proxmis": "^0.2.0"
