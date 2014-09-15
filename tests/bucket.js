@@ -147,7 +147,7 @@ exports['drains async, with max wait'] = function (test) {
 	
 };
 
-exports['drains into non-function'] = function (test) {
+exports['tapped into emitter'] = function (test) {
 	test.expect(4);
 
 	var b = new Bucket({pause: 10, maxPause: 50});
@@ -185,4 +185,20 @@ exports['tap error'] = function (test) {
 	});
 
 	test.done();
+};
+
+exports['drain timeout'] = function (test) {
+	test.expect(2);
+	var b = new Bucket({maxIdle: 500});
+	var waited = false;
+
+	setTimeout(function () {waited = true;}, 490);
+
+	b.drain(function (events) {
+		test.deepEqual(events, []);
+		test.ok(waited, 'Did not wait');
+		test.done();
+	});
+
+
 };

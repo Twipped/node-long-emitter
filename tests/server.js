@@ -64,15 +64,16 @@ exports['bucket cleanup'] = function (test) {
 };
 
 exports['bucket finished'] = function (test) {
-	var server = longEmitter({
-		expiration: 90,
-		cleanupPeriod: 50
-	});
+	var server = longEmitter();
 
 	var a = server.create();
 	var id = a.id;
 
+	a.emit('one');
+
 	server.finish(id);
+	
+	a.emit('two');
 
 	test.ok(server.get(id), 'I lost mah bucket.');
 
