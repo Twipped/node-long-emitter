@@ -169,7 +169,7 @@ exports['tapped into emitter'] = function (test) {
 		test.ok(false, 'should not have received third event');
 	});
 
-	emitter.on('_drained', test.done);
+	emitter.on('_empty', test.done);
 	
 	b.tap(emitter);
 
