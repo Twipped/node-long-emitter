@@ -1,5 +1,5 @@
 var Bucket = require('../lib/bucket.js');
-var events = require('events');
+var EventEmitter = require('events').EventEmitter;
 
 exports['emits to queue'] = function (test) {
 	var b = new Bucket();
@@ -156,7 +156,7 @@ exports['tapped into emitter'] = function (test) {
 
 	b.emit('onemore', 2, {foo:'bar'});
 
-	var emitter = new events.EventEmitter();
+	var emitter = new EventEmitter();
 	emitter.on('testevent', function (arg1, arg2) {
 		test.strictEqual(arg1, 'arg1');
 		test.strictEqual(arg2, 'argtwo');

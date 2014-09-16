@@ -1,4 +1,5 @@
 var longEmitter = require('../lib/server.js');
+var EventEmitter = require('events').EventEmitter;
 
 exports['initializes correctly'] = function (test) {
 	var server = longEmitter();
@@ -124,14 +125,36 @@ exports['param middleware'] = function (test) {
 	a.emit('three');
 
 	var res = {locals: {}};
+	var req = new EventEmitter();
 
-	server.param({}, res, function (err) {
+	server.param(req, res, function (err) {
 		test.ok(!err);
 		test.deepEqual(res, {locals: {events: [['one'],['two'],['three']]}});
 		test.done();
 
 		server.clear();
 	}, a.id);
+};
+
+exports['param disconnect'] = function (test) {
+	test.expect(1);
+	var server = longEmitter();
+
+	var a = server.create();
+
+	var res = {locals: {}};
+	var req = new EventEmitter();
+
+	server.param(req, res, function (err) {
+		test.ok(false, 'Request should not have continued');
+	}, a.id);
+
+	setTimeout(function () {
+		test.ok(req.emit('close'));
+
+		server.clear();
+		test.done();
+	}, 50);
 };
 
 exports['query middleware'] = function (test) {
@@ -145,7 +168,9 @@ exports['query middleware'] = function (test) {
 	a.emit('two');
 	a.emit('three');
 
-	var req = {query: {request: a.id}};
+	var req = new EventEmitter();
+	req.query = {request: a.id};
+
 	var res = {locals: {}};
 
 	server.query(req, res, function (err) {
@@ -172,7 +197,9 @@ exports['query route'] = function (test) {
 	a.emit('two');
 	a.emit('three');
 
-	var req = {query: {request: a.id}};
+	var req = new EventEmitter();
+	req.query = {request: a.id};
+
 	var res = {locals: {}, json: function (body) {
 		test.deepEqual(body, [['one'],['two'],['three']]);
 		test.done();
@@ -183,6 +210,36 @@ exports['query route'] = function (test) {
 	server.query(req, res, function (err) {
 		test.ok(false, 'Should not have called next()');
 	});
+};
+
+exports['query disconnect'] = function (test) {
+	test.expect(1);
+	var server = longEmitter({
+		query: function (req) {
+			return req.query.request;
+		},
+		querySend: true
+	});
+
+	var a = server.create();
+
+	var req = new EventEmitter();
+	req.query = {request: a.id};
+
+	var res = {locals: {}, json: function (body) {
+		test.ok(false, 'Should not have called res.json()');
+	}};
+
+	server.query(req, res, function (err) {
+		test.ok(false, 'Request should not have continued');
+	}, a.id);
+
+	setTimeout(function () {
+		test.ok(req.emit('close'));
+
+		server.clear();
+		test.done();
+	}, 50);
 };
 
 exports['multiple emitters'] = function (test) {
