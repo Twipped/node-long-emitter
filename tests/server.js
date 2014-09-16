@@ -89,6 +89,31 @@ exports['bucket finished'] = function (test) {
 
 };
 
+exports['bucket released'] = function (test) {
+	var server = longEmitter();
+
+	var a = server.create();
+	var id = a.id;
+
+	a.emit('one');
+
+	a.release();
+	
+	a.emit('two');
+
+	test.ok(server.get(id), 'I lost mah bucket.');
+
+	a.drain();
+
+	a.once('_drained', function () {
+		test.ok(!server.get(id), 'Bucket still exists');
+
+		test.done();
+
+		server.clear(); //cleanup so our tests don't hang
+	});
+};
+
 exports['param middleware'] = function (test) {
 	var server = longEmitter();
 
@@ -158,4 +183,46 @@ exports['query route'] = function (test) {
 	server.query(req, res, function (err) {
 		test.ok(false, 'Should not have called next()');
 	});
+};
+
+exports['multiple emitters'] = function (test) {
+	test.expect(2);
+	var server = longEmitter();
+	var a = server.create();
+	var b = server.create();
+
+	setTimeout(function () {
+		a.emit('one');
+	}, 10);
+
+	setTimeout(function () {
+		b.emit('two');
+	}, 20);
+
+	setTimeout(function () {
+		b.emit('three');
+		server.finish(b.id);
+	}, 30);
+
+	setTimeout(function () {
+		var b2 = server.get(b.id);
+		b2.drain(function (results) {
+			test.deepEqual(results, [['two'], ['three']]);
+		});
+	}, 40);
+
+	setTimeout(function () {
+		a.emit('four');
+		server.finish(a);
+	}, 50);
+
+	setTimeout(function () {
+		var a2 = server.get(a.id);
+		a2.drain(function (results) {
+			test.deepEqual(results, [['one'], ['four']]);
+			test.done();
+
+			server.clear();
+		});
+	}, 60);
 };
