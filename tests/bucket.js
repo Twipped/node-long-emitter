@@ -202,12 +202,14 @@ exports['drain timeout'] = function (test) {
 };
 
 exports['drain abort'] = function (test) {
-	test.expect(1);
+	test.expect(2);
 	var b = new Bucket();
 
 	var hook = b.drain(function (events) {
 		test.ok(false, 'Still drained');
 	});
+
+	test.strictEqual(typeof hook, 'object');
 
 	setTimeout(function () {
 		hook.abort();
