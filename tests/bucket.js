@@ -199,6 +199,22 @@ exports['drain timeout'] = function (test) {
 		test.ok(waited, 'Did not wait');
 		test.done();
 	});
+};
 
+exports['drain abort'] = function (test) {
+	test.expect(1);
+	var b = new Bucket();
 
+	var hook = b.drain(function (events) {
+		test.ok(false, 'Still drained');
+	});
+
+	setTimeout(function () {
+		hook.abort();
+
+		b.emit('one');
+
+		test.ok(true);
+		test.done();
+	}, 50);
 };
