@@ -220,3 +220,37 @@ exports['drain abort'] = function (test) {
 		test.done();
 	}, 50);
 };
+
+exports['emit errors w/ listener'] = function (test) {
+	test.expect(2);
+	var b = new Bucket({maxIdle: 500});
+
+	var e = new Error('Test error');
+
+	b.on('error', function (err) {
+		test.strictEqual(err, e);
+	});
+
+	b.drain(function (events) {
+		test.deepEqual(events, [['one']]);
+		test.done();
+	});
+
+	b.emit('error', e);
+	b.emit('one');
+};
+
+exports['emit errors w/o listener'] = function (test) {
+	test.expect(1);
+	var b = new Bucket({maxIdle: 500});
+
+	var e = new Error('Test error');
+
+	b.drain(function (events) {
+		test.deepEqual(events, [['error', e], ['one']]);
+		test.done();
+	});
+
+	b.emit('error', e);
+	b.emit('one');
+};
