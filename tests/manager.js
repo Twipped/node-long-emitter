@@ -1,99 +1,99 @@
-var longEmitter = require('../lib/server.js');
+var longEmitter = require('../lib/manager.js');
 var EventEmitter = require('events').EventEmitter;
 
 exports['initializes correctly'] = function (test) {
-	var server = longEmitter();
+	var manager = longEmitter();
 
-	test.deepEqual(Object.keys(server), ['create','get','close','finish','param','query', 'clear']);
+	test.deepEqual(Object.keys(manager), ['create','get','close','finish','param','query', 'clear']);
 
 	test.done();
-	server.clear(); //cleanup so our tests don't hang
+	manager.clear(); //cleanup so our tests don't hang
 };
 
 exports['create bucket'] = function (test) {
-	var server = longEmitter();
+	var manager = longEmitter();
 
-	var a = server.create();
+	var a = manager.create();
 	var id = a.id;
 
 	test.ok(a);
 	test.ok(id);
 
-	var b = server.get(id);
+	var b = manager.get(id);
 
 	test.strictEqual(a, b);
 
 	test.done();
-	server.clear(); //cleanup so our tests don't hang
+	manager.clear(); //cleanup so our tests don't hang
 };
 
 exports['close bucket'] = function (test) {
-	var server = longEmitter();
+	var manager = longEmitter();
 
-	var a = server.create();
+	var a = manager.create();
 	var id = a.id;
 
 	test.ok(a);
 	test.ok(id);
 
-	server.close(id);
+	manager.close(id);
 
-	test.ok(!server.get(id));
+	test.ok(!manager.get(id));
 
 	test.done();
-	server.clear(); //cleanup so our tests don't hang
+	manager.clear(); //cleanup so our tests don't hang
 };
 
 exports['bucket cleanup'] = function (test) {
-	var server = longEmitter({
+	var manager = longEmitter({
 		expiration: 90,
 		cleanupPeriod: 50
 	});
 
-	var a = server.create();
+	var a = manager.create();
 	var id = a.id;
 
 	test.ok(a);
 	test.ok(id);
 
 	setTimeout(function () {
-		var b = server.get(id);
+		var b = manager.get(id);
 		test.ok(!b, 'Bucket did not expire');
 		test.done();
-		server.clear(); //cleanup so our tests don't hang
+		manager.clear(); //cleanup so our tests don't hang
 	}, 125);
 };
 
 exports['bucket finished'] = function (test) {
-	var server = longEmitter();
+	var manager = longEmitter();
 
-	var a = server.create();
+	var a = manager.create();
 	var id = a.id;
 
 	a.emit('one');
 
-	server.finish(id);
+	manager.finish(id);
 	
 	a.emit('two');
 
-	test.ok(server.get(id), 'I lost mah bucket.');
+	test.ok(manager.get(id), 'I lost mah bucket.');
 
 	a.drain();
 
 	a.once('_drained', function () {
-		test.ok(!server.get(id), 'Bucket still exists');
+		test.ok(!manager.get(id), 'Bucket still exists');
 
 		test.done();
 
-		server.clear(); //cleanup so our tests don't hang
+		manager.clear(); //cleanup so our tests don't hang
 	});
 
 };
 
 exports['bucket released'] = function (test) {
-	var server = longEmitter();
+	var manager = longEmitter();
 
-	var a = server.create();
+	var a = manager.create();
 	var id = a.id;
 
 	a.emit('one');
@@ -102,23 +102,23 @@ exports['bucket released'] = function (test) {
 	
 	a.emit('two');
 
-	test.ok(server.get(id), 'I lost mah bucket.');
+	test.ok(manager.get(id), 'I lost mah bucket.');
 
 	a.drain();
 
 	a.once('_drained', function () {
-		test.ok(!server.get(id), 'Bucket still exists');
+		test.ok(!manager.get(id), 'Bucket still exists');
 
 		test.done();
 
-		server.clear(); //cleanup so our tests don't hang
+		manager.clear(); //cleanup so our tests don't hang
 	});
 };
 
 exports['param middleware'] = function (test) {
-	var server = longEmitter();
+	var manager = longEmitter();
 
-	var a = server.create();
+	var a = manager.create();
 
 	a.emit('one');
 	a.emit('two');
@@ -127,42 +127,42 @@ exports['param middleware'] = function (test) {
 	var res = {locals: {}};
 	var req = new EventEmitter();
 
-	server.param(req, res, function (err) {
+	manager.param(req, res, function (err) {
 		test.ok(!err);
 		test.deepEqual(res, {locals: {events: [['one'],['two'],['three']]}});
 		test.done();
 
-		server.clear();
+		manager.clear();
 	}, a.id);
 };
 
 exports['param disconnect'] = function (test) {
 	test.expect(1);
-	var server = longEmitter();
+	var manager = longEmitter();
 
-	var a = server.create();
+	var a = manager.create();
 
 	var res = {locals: {}};
 	var req = new EventEmitter();
 
-	server.param(req, res, function (err) {
+	manager.param(req, res, function (err) {
 		test.ok(false, 'Request should not have continued');
 	}, a.id);
 
 	setTimeout(function () {
 		test.ok(req.emit('close'));
 
-		server.clear();
+		manager.clear();
 		test.done();
 	}, 50);
 };
 
 exports['query middleware'] = function (test) {
-	var server = longEmitter({
+	var manager = longEmitter({
 		query: 'request'
 	});
 
-	var a = server.create();
+	var a = manager.create();
 
 	a.emit('one');
 	a.emit('two');
@@ -173,25 +173,25 @@ exports['query middleware'] = function (test) {
 
 	var res = {locals: {}};
 
-	server.query(req, res, function (err) {
+	manager.query(req, res, function (err) {
 		test.ok(!err);
 		test.deepEqual(res, {locals: {events: [['one'],['two'],['three']]}});
 		test.done();
 
-		server.clear();
+		manager.clear();
 	});
 };
 
 
 exports['query route'] = function (test) {
-	var server = longEmitter({
+	var manager = longEmitter({
 		query: function (req) {
 			return req.query.request;
 		},
 		querySend: true
 	});
 
-	var a = server.create();
+	var a = manager.create();
 
 	a.emit('one');
 	a.emit('two');
@@ -204,24 +204,24 @@ exports['query route'] = function (test) {
 		test.deepEqual(body, [['one'],['two'],['three']]);
 		test.done();
 
-		server.clear();
+		manager.clear();
 	}};
 
-	server.query(req, res, function (err) {
+	manager.query(req, res, function (err) {
 		test.ok(false, 'Should not have called next()');
 	});
 };
 
 exports['query disconnect'] = function (test) {
 	test.expect(1);
-	var server = longEmitter({
+	var manager = longEmitter({
 		query: function (req) {
 			return req.query.request;
 		},
 		querySend: true
 	});
 
-	var a = server.create();
+	var a = manager.create();
 
 	var req = new EventEmitter();
 	req.query = {request: a.id};
@@ -230,23 +230,23 @@ exports['query disconnect'] = function (test) {
 		test.ok(false, 'Should not have called res.json()');
 	}};
 
-	server.query(req, res, function (err) {
+	manager.query(req, res, function (err) {
 		test.ok(false, 'Request should not have continued');
 	}, a.id);
 
 	setTimeout(function () {
 		test.ok(req.emit('close'));
 
-		server.clear();
+		manager.clear();
 		test.done();
 	}, 50);
 };
 
 exports['multiple emitters'] = function (test) {
 	test.expect(2);
-	var server = longEmitter();
-	var a = server.create();
-	var b = server.create();
+	var manager = longEmitter();
+	var a = manager.create();
+	var b = manager.create();
 
 	setTimeout(function () {
 		a.emit('one');
@@ -258,11 +258,11 @@ exports['multiple emitters'] = function (test) {
 
 	setTimeout(function () {
 		b.emit('three');
-		server.finish(b.id);
+		manager.finish(b.id);
 	}, 30);
 
 	setTimeout(function () {
-		var b2 = server.get(b.id);
+		var b2 = manager.get(b.id);
 		b2.drain(function (results) {
 			test.deepEqual(results, [['two'], ['three']]);
 		});
@@ -270,16 +270,16 @@ exports['multiple emitters'] = function (test) {
 
 	setTimeout(function () {
 		a.emit('four');
-		server.finish(a);
+		manager.finish(a);
 	}, 50);
 
 	setTimeout(function () {
-		var a2 = server.get(a.id);
+		var a2 = manager.get(a.id);
 		a2.drain(function (results) {
 			test.deepEqual(results, [['one'], ['four']]);
 			test.done();
 
-			server.clear();
+			manager.clear();
 		});
 	}, 60);
 };
