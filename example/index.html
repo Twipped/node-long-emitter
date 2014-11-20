@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	</head>
+	<body>
+		<button>Count Down!</button>
+		<div class="output"></div>
+		<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+		<script>
+		(function () {
+			// when the button is clicked, start the process
+			$('button').on('click', start);
+
+			// keep track of if a task is in progress so we know if we should keep polling.
+			var running;
+
+			function start() {
+				// disable the button so that the user can't trigger two iterations.
+				$('button')[0].disabled = true;
+
+				running = true;
+				
+				$.get('/ticker/', receiveResponse);
+			}
+
+			function stop () {
+				running = false;
+
+				$('button')[0].disabled = false;
+			}
+
+			function receiveResponse (data) {
+				if (data.error) {
+					log('ERROR', data.error);
+					return stop();
+				}
+
+				$.each(data.events || [], function (i, args) {
+					// once we get an 'end' event, stop making more requests.
+					if (args[0] === 'end') {
+						stop();
+					}
+
+					// "emit" our individual event. A more robust solution would pass this to some kind of mediator such as a Backbone model or a client-side EventEmitter
+					log.apply(null, args);
+				});
+
+				if (running) {
+					$.get('/emitter/' + data.id, receiveResponse);
+				}
+			}
+
+			function log() {
+				$('.output').append('<p>' + [].slice.apply(arguments).join(', ') + '</p>');
+			}
+
+		})();
+		</script>
+	</body>
+</html>
