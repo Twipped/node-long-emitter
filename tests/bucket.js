@@ -216,6 +216,30 @@ exports['drains when maxEmits is reached, async'] = function (test) {
 	}, 1000);
 };
 
+exports['drains up to maxSend'] = function (test) {
+	test.expect(3);
+
+	var b = new Bucket({maxSend: 10});
+
+	b.drain(function (events) {
+		test.strictEqual(events.length, 10);
+	});
+
+	var count = 25;
+	while (count > 0) {
+		b.emit('iteration', count--);
+	}
+
+	b.drain(function (events) {
+		test.strictEqual(events.length, 10);
+	});
+
+	b.drain(function (events) {
+		test.strictEqual(events.length, 5);
+		test.done();
+	});
+};
+
 exports['tapped into emitter'] = function (test) {
 	test.expect(4);
 
