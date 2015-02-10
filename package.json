@@ -1,6 +1,6 @@
 {
   "name": "long-emitter",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "A buffered EventEmitter with built in express middleware for long-polling.",
   "main": "index.js",
   "scripts": {
