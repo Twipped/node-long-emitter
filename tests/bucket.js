@@ -147,6 +147,75 @@ exports['drains async, with max wait'] = function (test) {
 	
 };
 
+exports['drains when maxEmits is reached'] = function (test) {
+	test.expect(2);
+
+	var b = new Bucket({pause: 150, maxPause: 500, maxEmits: 8});
+
+	b.drain(function (events) {
+		test.deepEqual(events, [
+			['iteration', 10],
+			['iteration', 9],
+			['iteration', 8],
+			['iteration', 7],
+			['iteration', 6],
+			['iteration', 5],
+			['iteration', 4],
+			['iteration', 3],
+		]);
+	});
+
+	var count = 10;
+	while (count > 0) {
+		b.emit('iteration', count--);
+	}
+
+	b.drain(function (events) {
+		test.deepEqual(events, [
+			['iteration', 2],
+			['iteration', 1],
+		]);
+		test.done();
+	});
+};
+
+exports['drains when maxEmits is reached, async'] = function (test) {
+	test.expect(2);
+
+	var b = new Bucket({pause: 150, maxPause: 1000, maxEmits: 8});
+
+	b.drain(function (events) {
+		test.deepEqual(events, [
+			['iteration', 10],
+			['iteration', 9],
+			['iteration', 8],
+			['iteration', 7],
+			['iteration', 6],
+			['iteration', 5],
+			['iteration', 4],
+			['iteration', 3],
+		]);
+	});
+
+	var count = 10;
+	function loop () {
+		b.emit('iteration', count--);
+
+		if (count > 0) setTimeout(loop, 50);
+	}
+	loop();
+
+	setTimeout(function () {
+		b.drain(function (events) {
+			test.deepEqual(events, [
+				['iteration', 2],
+				['iteration', 1],
+			]);
+			test.done();
+		});
+	}, 1000);
+};
+
 exports['tapped into emitter'] = function (test) {
 	test.expect(4);
 
