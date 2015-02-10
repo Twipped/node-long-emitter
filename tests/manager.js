@@ -115,6 +115,39 @@ exports['bucket released'] = function (test) {
 	});
 };
 
+exports['bucket does not release until empty'] = function (test) {
+	test.expect(5);
+	var manager = longEmitter({maxSend: 5});
+
+	var a = manager.create();
+	var id = a.id;
+
+	var i = 10;
+	while (i--) a.emit('i');
+
+	a.release();
+
+	test.ok(manager.get(id), 'I lost mah bucket.');
+
+	a.drain(function (events) {
+		test.equal(events.length, 5);
+	});
+
+	test.ok(manager.get(id), 'I lost mah bucket.');
+
+	a.drain(function (events) {
+		test.equal(events.length, 5);
+	});
+
+	a.once('_drained', function () {
+		test.ok(!manager.get(id), 'Bucket still exists');
+
+		test.done();
+
+		manager.clear(); //cleanup so our tests don't hang
+	});
+};
+
 exports['param middleware'] = function (test) {
 	var manager = longEmitter();
 
